@@ -1,0 +1,6 @@
+{
+  "name": "Machine & Operator Planner",
+  "description": "Industrial Engineering Decision Support System for analyzing machine capacity, calculating daily production targets, estimating job completion time, and ranking suitable operators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

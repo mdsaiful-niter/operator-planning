@@ -104,6 +104,9 @@ export default function App() {
   const [machines, setMachines] = useState<MachineRecord[]>([]);
   const [operators, setOperators] = useState<OperatorRecord[]>([]);
   const [settings, setSettings] = useState<PlanningSettings>(DEFAULT_PLANNING_SETTINGS);
+  const [workingHoursInput, setWorkingHoursInput] = useState<string>(
+    String(DEFAULT_PLANNING_SETTINGS.availableWorkingHoursPerDay)
+  );
 
   const [machineFileName, setMachineFileName] = useState<string | null>(null);
   const [operatorFileName, setOperatorFileName] = useState<string | null>(null);
@@ -902,10 +905,6 @@ export default function App() {
               <h2 className="text-sm font-bold text-white tracking-wide">
                 3. Production Calculation &amp; Operator Ranking
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Displays <code className="font-mono text-emerald-300">-</code> until Machine &amp;
-                Operator data is imported or typed above
-              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -918,18 +917,27 @@ export default function App() {
                 </label>
                 <input
                   id="working-hours-input"
-                  type="number"
-                  min={0.5}
-                  max={24}
-                  step={0.5}
-                  value={settings.availableWorkingHoursPerDay}
+                  type="text"
+                  inputMode="decimal"
+                  value={workingHoursInput}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
-                    if (!Number.isNaN(val) && val > 0 && val <= 24) {
+                    const raw = e.target.value.replace(/[^0-9.]/g, '');
+                    setWorkingHoursInput(raw);
+                    const val = Number(raw);
+                    if (raw !== '' && !Number.isNaN(val) && val > 0 && val <= 24) {
                       setSettings({ ...settings, availableWorkingHoursPerDay: val });
                     }
                   }}
-                  className="w-14 px-2 py-0.5 text-right text-xs font-mono font-bold text-cyan-300 bg-slate-900 border border-slate-700 rounded-md focus:outline-none focus:border-cyan-400"
+                  onBlur={() => {
+                    const val = Number(workingHoursInput);
+                    if (workingHoursInput.trim() === '' || Number.isNaN(val) || val <= 0) {
+                      setWorkingHoursInput(String(settings.availableWorkingHoursPerDay));
+                    } else if (val > 24) {
+                      setWorkingHoursInput('24');
+                      setSettings({ ...settings, availableWorkingHoursPerDay: 24 });
+                    }
+                  }}
+                  className="w-12 px-2 py-0.5 text-center text-xs font-mono font-bold text-cyan-300 bg-slate-900 border border-slate-700 rounded-md focus:outline-none focus:border-cyan-400 [appearance:textfield]"
                 />
                 <span className="text-xs text-slate-400">h</span>
               </div>
@@ -990,7 +998,7 @@ export default function App() {
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                 <h3 className="text-xs font-bold text-cyan-300 tracking-wide">
-                  OPERATOR RANKING (Max Suggested = No. of Machines | Priority 1 → Priority 2 → Priority 3, Experience Desc.)
+                  OPERATOR RANKING
                 </h3>
                 <button
                   type="button"
@@ -1049,9 +1057,6 @@ export default function App() {
                 <h3 className="text-xs font-bold text-emerald-300 tracking-wide">
                   MACHINE-WISE PRODUCTION PLAN
                 </h3>
-                <span className="text-[11px] text-slate-400 font-mono">
-                  Total Cap/Hr = Mach × Cap/Hr | Daily Cap = Total Cap/Hr × {settings.availableWorkingHoursPerDay}h | Day 1 Target = MIN(Job Qty, Daily Cap)
-                </span>
               </div>
               <div className="overflow-x-auto rounded-xl border border-slate-800">
                 <table className="w-full text-left border-collapse">
@@ -1226,9 +1231,6 @@ export default function App() {
                   <h3 className="text-xs font-bold text-indigo-300 tracking-wide">
                     MULTI-DAY PRODUCTION TIMELINE &amp; BOTTLENECK ANALYSIS
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Visualizes active run hours vs. idle capacity per machine across each working day ({settings.availableWorkingHoursPerDay}h/day shift window)
-                  </p>
                 </div>
 
                 {hasCalculatedPlans && (
